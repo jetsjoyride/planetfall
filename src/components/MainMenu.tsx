@@ -135,11 +135,6 @@ export const MainMenu = () => {
                                     <p><strong>Mouse</strong> - Look</p>
                                     <p><strong>Click</strong> - Shoot</p>
                                     <p><strong>Space</strong> - Jump</p>
-
-                                    <p style={{ color: '#40ff40', fontWeight: 'bold', marginBottom: '0.5rem', marginTop: '1.5rem' }}>MOBILE</p>
-                                    <p><strong>Left</strong> - Move</p>
-                                    <p><strong>Right</strong> - Look</p>
-                                    <p><strong>Tap Buttons</strong> - Jump/Fire</p>
                                 </div>
                             </div>
                         </div>
