@@ -2,19 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow global access to stats for player counting
-    match /stats/{document=**} {
-      allow read, write: if true;
-    }
-    
-    // Allow global access to high scores
-    match /highscores/{document=**} {
-      allow read, write: if true;
-    }
-
-    // Default deny
+    // PUBLIC TEST MODE
+    // Allow read/write access to all documents to debug permission errors.
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }
