@@ -4,16 +4,16 @@ import { RigidBody, RapierRigidBody } from '@react-three/rapier'
 import * as THREE from 'three'
 import { useGameStore } from '../store/gameStore'
 
-interface EnemyProps {
+interface LeafsEnemyProps {
     id: number
-    position: [number, number, number]
 }
 
-export const Enemy = ({ id, position }: EnemyProps) => {
+export const LeafsEnemy = ({ id }: LeafsEnemyProps) => {
     const body = useRef<RapierRigidBody>(null)
     const { camera } = useThree()
     const { takeDamage } = useGameStore()
-    const speed = 4
+    const lastAttackTime = useRef(0)
+    const speed = 6 // Faster
 
     useFrame((_state, _delta) => {
         if (!body.current) return
@@ -30,36 +30,40 @@ export const Enemy = ({ id, position }: EnemyProps) => {
         const velocity = body.current.linvel()
         body.current.setLinvel({ x: direction.x * speed, y: velocity.y, z: direction.z * speed }, true)
 
-        // Rotation to face player
         const angle = Math.atan2(direction.x, direction.z)
         body.current.setRotation(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle), true)
 
-        // Damage Check
         if (new THREE.Vector3(enemyPos.x, enemyPos.y, enemyPos.z).distanceTo(playerPos) < 2.5) {
-            takeDamage(0.5) // Continuous damage if touching
+            const now = Date.now()
+            if (now - lastAttackTime.current > 1000) {
+                takeDamage(10)
+                lastAttackTime.current = now
+            }
         }
     })
 
     return (
-        <RigidBody ref={body} position={position} colliders="hull" lockRotations userData={{ type: 'enemy', id }}>
+        <RigidBody ref={body} position={[10, 2, 10]} colliders="hull" lockRotations userData={{ type: 'enemy', id }}>
             <group>
-                {/* Humanoid Shape */}
+                {/* Leafs Jersey Body */}
                 <mesh position={[0, 0, 0]} castShadow>
-                    <capsuleGeometry args={[0.3, 0.8]} />
-                    <meshStandardMaterial color="#204020" emissive="#40ff40" emissiveIntensity={0.2} roughness={0.1} />
+                    <boxGeometry args={[0.6, 0.8, 0.3]} />
+                    <meshStandardMaterial color="#00205b" /> {/* Leafs Blue */}
                 </mesh>
+                {/* Head */}
                 <mesh position={[0, 0.7, 0]} castShadow>
-                    <sphereGeometry args={[0.25]} />
-                    <meshStandardMaterial color="#204020" emissive="#40ff40" emissiveIntensity={0.5} roughness={0.1} />
+                    <boxGeometry args={[0.4, 0.4, 0.4]} />
+                    <meshStandardMaterial color="#ffccaa" /> {/* Skin tone */}
                 </mesh>
-                {/* Arms */}
-                <mesh position={[0.4, 0.2, 0]} rotation={[0, 0, -0.5]}>
-                    <capsuleGeometry args={[0.1, 0.6]} />
-                    <meshStandardMaterial color="#204020" />
+                {/* White Stripe */}
+                <mesh position={[0, 0, 0.16]}>
+                    <planeGeometry args={[0.4, 0.2]} />
+                    <meshStandardMaterial color="white" />
                 </mesh>
-                <mesh position={[-0.4, 0.2, 0]} rotation={[0, 0, 0.5]}>
-                    <capsuleGeometry args={[0.1, 0.6]} />
-                    <meshStandardMaterial color="#204020" />
+                {/* Hockey Stick */}
+                <mesh position={[0.5, -0.2, 0.4]} rotation={[0.5, 0, 0]}>
+                    <boxGeometry args={[0.1, 1.5, 0.1]} />
+                    <meshStandardMaterial color="#8B4513" />
                 </mesh>
             </group>
         </RigidBody>

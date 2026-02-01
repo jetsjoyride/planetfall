@@ -33,7 +33,7 @@ export const World = () => {
             <RigidBody type="fixed" colliders="cuboid" restitution={0.2} friction={1}>
                 <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0, 0]}>
                     <planeGeometry args={[1000, 1000]} />
-                    <meshStandardMaterial color="#050505" roughness={0.8} metalness={0.2} />
+                    <meshStandardMaterial color="#5a6e4e" roughness={0.9} metalness={0.1} />
                 </mesh>
             </RigidBody>
 

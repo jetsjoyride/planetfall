@@ -1,9 +1,11 @@
 import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { Stats, KeyboardControls } from '@react-three/drei'
+import { Stats, KeyboardControls, Sky } from '@react-three/drei'
 import { Player } from './Player'
 import { World } from './World'
 import { EnemyManager } from './EnemyManager'
+import { Item } from './Item'
+import { useGameStore } from '../store/gameStore'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 
 const keyboardMap = [
@@ -16,26 +18,27 @@ const keyboardMap = [
 ]
 
 export const Game = () => {
+    const items = useGameStore((state) => state.items)
+
     return (
         <Canvas shadows camera={{ position: [0, 5, 10], fov: 75 }} gl={{ antialias: false }}>
             <KeyboardControls map={keyboardMap}>
                 <Stats />
-                <fog attach="fog" args={['#050505', 0, 40]} />
-                <color attach="background" args={['#050505']} />
-
-                {/* Dramatic Lighting */}
-                <hemisphereLight intensity={0.2} groundColor="#000000" />
+                <Sky sunPosition={[100, 20, 100]} turbidity={0.5} rayleigh={0.5} />
+                <ambientLight intensity={0.5} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow shadow-bias={-0.0001} />
-                <ambientLight intensity={0.1} />
 
                 <Physics gravity={[0, -20, 0]}>
                     <Player />
                     <World />
                     <EnemyManager />
+                    {items.map(item => (
+                        <Item key={item.id} {...item} />
+                    ))}
                 </Physics>
 
                 <EffectComposer>
-                    <Bloom luminanceThreshold={0.5} mipmapBlur intensity={1.5} radius={0.5} />
+                    <Bloom luminanceThreshold={1} intensity={1.5} />
                 </EffectComposer>
             </KeyboardControls>
         </Canvas>
