@@ -142,15 +142,25 @@ export const Player = () => {
         const translation = body.current.translation()
         state.camera.position.set(translation.x, translation.y + 1.5, translation.z)
 
+        // Check both keyboard run and mobile run
+        const mobileRun = useMobileControlsStore.getState().isRunning
+        const isRunning = run || mobileRun
+
+        let mobX = movement.x
+        let mobY = movement.y
+
+        // Mobile Run acts as Forward if no other direction is pressed
+        if (mobileRun && mobX === 0 && mobY === 0) {
+            mobY = -1 // Forward
+        }
+
         // Movement
-        const zDir = (Number(backward) - Number(forward)) + movement.y
-        const xDir = (Number(right) - Number(left)) + movement.x
+        const zDir = (Number(backward) - Number(forward)) + mobY
+        const xDir = (Number(right) - Number(left)) + mobX
 
         frontVector.set(0, 0, zDir)
         sideVector.set(xDir, 0, 0)
 
-        // Check both keyboard run and mobile run
-        const isRunning = run || useMobileControlsStore.getState().isRunning
         const currentSpeed = isRunning ? RUN_SPEED : SPEED
 
         direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(currentSpeed).applyEuler(state.camera.rotation)

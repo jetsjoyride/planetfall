@@ -127,6 +127,11 @@ export const MobileControls = () => {
         pointerEvents: 'none' // Grid container shouldn't block, but buttons will
     }
 
+    const handleButtonEnd = (e: React.TouchEvent, action: () => void) => {
+        e.stopPropagation()
+        action()
+    }
+
     return (
         <div
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, touchAction: 'none' }}
@@ -136,40 +141,69 @@ export const MobileControls = () => {
         >
             <div style={containerStyle}>
                 {/* Row 1 */}
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setJumping(true) }} onTouchEnd={(e) => { e.stopPropagation(); setJumping(false) }}>
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); setJumping(true) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setJumping(false))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setJumping(false))}>
                     Jump
                 </div>
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(0, 1) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                {/* Forward should be -1 (Negative Z is forward) */}
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); setMovement(0, -1) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setMovement(0, 0))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setMovement(0, 0))}>
                     Forward
                     <span style={{ fontSize: '20px' }}>⬆️</span>
                 </div>
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); handleLookStart('up') }} onTouchEnd={(e) => { e.stopPropagation(); handleLookEnd() }}>
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); handleLookStart('up') }}
+                    onTouchEnd={(e) => handleButtonEnd(e, handleLookEnd)}
+                    onTouchCancel={(e) => handleButtonEnd(e, handleLookEnd)}>
                     Look Up
                 </div>
 
                 {/* Row 2 */}
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(-1, 0) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); setMovement(1, 0) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setMovement(0, 0))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setMovement(0, 0))}>
                     Left
                     <span style={{ fontSize: '20px' }}>⬅️</span>
                 </div>
-                <div style={{ ...btnStyle, background: 'rgba(255, 0, 0, 0.5)' }} onTouchStart={(e) => { e.stopPropagation(); setShooting(true) }} onTouchEnd={(e) => { e.stopPropagation(); setShooting(false) }}>
+                <div style={{ ...btnStyle, background: 'rgba(255, 0, 0, 0.5)' }}
+                    onTouchStart={(e) => { e.stopPropagation(); setShooting(true) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setShooting(false))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setShooting(false))}>
                     Fire
                     <span style={{ fontSize: '10px' }}>🔴</span>
                 </div>
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(1, 0) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); setMovement(-1, 0) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setMovement(0, 0))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setMovement(0, 0))}>
                     Right
                     <span style={{ fontSize: '20px' }}>➡️</span>
                 </div>
 
                 {/* Row 3 */}
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setRunning(true) }} onTouchEnd={(e) => { e.stopPropagation(); setRunning(false) }}>
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); setRunning(true) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setRunning(false))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setRunning(false))}>
                     Run
                 </div>
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(0, -1) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                {/* Reverse should be 1 (Positive Z is backward) */}
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); setMovement(0, 1) }}
+                    onTouchEnd={(e) => handleButtonEnd(e, () => setMovement(0, 0))}
+                    onTouchCancel={(e) => handleButtonEnd(e, () => setMovement(0, 0))}>
                     Reverse
                     <span style={{ fontSize: '20px' }}>⬇️</span>
                 </div>
-                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); handleLookStart('down') }} onTouchEnd={(e) => { e.stopPropagation(); handleLookEnd() }}>
+                <div style={btnStyle}
+                    onTouchStart={(e) => { e.stopPropagation(); handleLookStart('down') }}
+                    onTouchEnd={(e) => handleButtonEnd(e, handleLookEnd)}
+                    onTouchCancel={(e) => handleButtonEnd(e, handleLookEnd)}>
                     Look<br />Down
                 </div>
             </div>
