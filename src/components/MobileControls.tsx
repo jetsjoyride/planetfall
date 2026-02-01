@@ -18,6 +18,9 @@ export const MobileControls = () => {
     const lookIdRef = useRef<number | null>(null)
     const lastLookPos = useRef<{ x: number, y: number } | null>(null)
 
+    // D-Pad state
+    const dpadState = useRef({ up: false, down: false, left: false, right: false })
+
     // Check if touch is supported/active
     const [isTouch, setIsTouch] = useState(false)
     useEffect(() => {
@@ -112,8 +115,7 @@ export const MobileControls = () => {
         }
     }
 
-    // D-Pad state
-    const dpadState = useRef({ up: false, down: false, left: false, right: false })
+
 
     const updateDpadMovement = () => {
         let x = 0

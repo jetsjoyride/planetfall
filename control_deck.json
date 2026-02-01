@@ -1,6 +1,7 @@
 {
     "mode": "RAPID_PROTOTYPE",
     "testing_suite": "OFF",
+    "auto_deploy": false,
     "checkin_command": "git add . && git commit -m 'wip' && git push",
     "update_docs_command": "./utils/generate_docs.sh",
     "deploy_command": "npm run build && npx firebase deploy",
