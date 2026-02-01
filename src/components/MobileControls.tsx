@@ -2,24 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useMobileControlsStore } from '../store/mobileControlsStore'
 import { useGameStore } from '../store/gameStore'
 
-const JOYSTICK_SIZE = 100
-const HANDLE_SIZE = 50
-
 export const MobileControls = () => {
-    const { setMovement, setJumping, setShooting, addCameraDelta, setIsMobile } = useMobileControlsStore()
+    const { setMovement, setJumping, setShooting, setRunning, addCameraDelta, setIsMobile } = useMobileControlsStore()
     const { gameState } = useGameStore()
 
-    // Joystick state
-    const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
-    const [joystickOrigin, setJoystickOrigin] = useState<{ x: number, y: number } | null>(null)
-    const joystickIdRef = useRef<number | null>(null)
-
-    // Look state
+    // Touch look state
     const lookIdRef = useRef<number | null>(null)
     const lastLookPos = useRef<{ x: number, y: number } | null>(null)
-
-    // D-Pad state
-    const dpadState = useRef({ up: false, down: false, left: false, right: false })
+    const lastTapTime = useRef<number>(0)
 
     // Check if touch is supported/active
     const [isTouch, setIsTouch] = useState(false)
@@ -37,296 +27,151 @@ export const MobileControls = () => {
         return () => window.removeEventListener('resize', checkTouch)
     }, [setIsMobile])
 
+    // Continuous button state handlers
+    const lookInterval = useRef<number | null>(null)
+
+    useEffect(() => {
+        return () => {
+            if (lookInterval.current) clearInterval(lookInterval.current)
+        }
+    }, [])
+
     if (!isTouch || gameState !== 'playing') return null
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            const touch = e.changedTouches[i]
-            const x = touch.clientX
-            const y = touch.clientY
+    // Handlers
+    const handleLookStart = (dir: 'up' | 'down') => {
+        if (lookInterval.current) clearInterval(lookInterval.current)
+        lookInterval.current = window.setInterval(() => {
+            addCameraDelta(0, dir === 'up' ? -5 : 5) // Continuous pitch
+        }, 16)
+    }
 
-            // Left half of screen for Joystick
-            if (x < window.innerWidth / 2) {
-                if (joystickIdRef.current === null) {
-                    joystickIdRef.current = touch.identifier
-                    setJoystickOrigin({ x, y })
-                    setJoystickPos({ x: 0, y: 0 })
-                }
-            }
-            // Right half for Look
-            else {
-                if (lookIdRef.current === null) {
-                    lookIdRef.current = touch.identifier
-                    lastLookPos.current = { x, y }
-                }
-            }
+    const handleLookEnd = () => {
+        if (lookInterval.current) {
+            clearInterval(lookInterval.current)
+            lookInterval.current = null
         }
     }
 
-    const handleTouchMove = (e: React.TouchEvent) => {
+    // Touch Look (Background)
+    const handleBgTouchStart = (e: React.TouchEvent) => {
+        const now = Date.now()
+        // Double tap detection (within 300ms)
+        if (now - lastTapTime.current < 300) {
+            setShooting(true)
+            setTimeout(() => setShooting(false), 100)
+            lastTapTime.current = 0 // Reset
+        } else {
+            lastTapTime.current = now
+        }
+
+        // Only track if not already tracking
+        if (lookIdRef.current === null) {
+            const touch = e.changedTouches[0]
+            lookIdRef.current = touch.identifier
+            lastLookPos.current = { x: touch.clientX, y: touch.clientY }
+        }
+    }
+
+    const handleBgTouchMove = (e: React.TouchEvent) => {
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i]
-
-            // Update Joystick
-            if (touch.identifier === joystickIdRef.current && joystickOrigin) {
-                const deltaX = touch.clientX - joystickOrigin.x
-                const deltaY = touch.clientY - joystickOrigin.y
-
-                // Clamp magnitude
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-                const maxDist = JOYSTICK_SIZE / 2
-                const scale = distance > maxDist ? maxDist / distance : 1
-
-                const clampedX = deltaX * scale
-                const clampedY = deltaY * scale
-
-                setJoystickPos({ x: clampedX, y: clampedY })
-
-                // Update store (normalized -1 to 1)
-                setMovement(clampedX / maxDist, clampedY / maxDist)
-            }
-
-            // Update Look
             if (touch.identifier === lookIdRef.current && lastLookPos.current) {
                 const deltaX = touch.clientX - lastLookPos.current.x
                 const deltaY = touch.clientY - lastLookPos.current.y
-
                 addCameraDelta(deltaX, deltaY)
                 lastLookPos.current = { x: touch.clientX, y: touch.clientY }
             }
         }
     }
 
-    const handleTouchEnd = (e: React.TouchEvent) => {
+    const handleBgTouchEnd = (e: React.TouchEvent) => {
         for (let i = 0; i < e.changedTouches.length; i++) {
-            const touch = e.changedTouches[i]
-
-            if (touch.identifier === joystickIdRef.current) {
-                joystickIdRef.current = null
-                setJoystickOrigin(null)
-                setJoystickPos({ x: 0, y: 0 })
-                setMovement(0, 0)
-            }
-
-            if (touch.identifier === lookIdRef.current) {
+            if (e.changedTouches[i].identifier === lookIdRef.current) {
                 lookIdRef.current = null
                 lastLookPos.current = null
             }
         }
     }
 
-
-
-    const updateDpadMovement = () => {
-        let x = 0
-        let y = 0
-        if (dpadState.current.up) y -= 1
-        if (dpadState.current.down) y += 1
-        if (dpadState.current.left) x -= 1
-        if (dpadState.current.right) x += 1
-
-        // Normalize if diagonal
-        if (x !== 0 && y !== 0) {
-            const len = Math.sqrt(x * x + y * y)
-            x /= len
-            y /= len
-        }
-
-        setMovement(x, y)
+    // Button Style
+    const btnStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        background: 'rgba(0, 0, 0, 0.5)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        borderRadius: '8px',
+        color: 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        userSelect: 'none',
+        touchAction: 'none',
+        pointerEvents: 'auto' // Buttons catch events
     }
 
-    const handleDpad = (dir: 'up' | 'down' | 'left' | 'right', active: boolean) => {
-        dpadState.current[dir] = active
-        updateDpadMovement()
+    const containerStyle: React.CSSProperties = {
+        position: 'absolute',
+        bottom: '20px',
+        right: '20px',
+        width: '240px',
+        height: '180px', // 3 rows of 60px
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gridTemplateRows: '1fr 1fr 1fr',
+        gap: '8px',
+        zIndex: 1001,
+        pointerEvents: 'none' // Grid container shouldn't block, but buttons will
     }
 
     return (
         <div
-            style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: 1000,
-                touchAction: 'none',
-                userSelect: 'none'
-            }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1000, touchAction: 'none' }}
+            onTouchStart={handleBgTouchStart}
+            onTouchMove={handleBgTouchMove}
+            onTouchEnd={handleBgTouchEnd}
         >
-            {/* Visual Joystick */}
-            {joystickOrigin && (
-                <div style={{
-                    position: 'absolute',
-                    left: joystickOrigin.x - JOYSTICK_SIZE / 2,
-                    top: joystickOrigin.y - JOYSTICK_SIZE / 2,
-                    width: JOYSTICK_SIZE,
-                    height: JOYSTICK_SIZE,
-                    borderRadius: '50%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    pointerEvents: 'none'
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        left: JOYSTICK_SIZE / 2 - HANDLE_SIZE / 2 + joystickPos.x,
-                        top: JOYSTICK_SIZE / 2 - HANDLE_SIZE / 2 + joystickPos.y,
-                        width: HANDLE_SIZE,
-                        height: HANDLE_SIZE,
-                        borderRadius: '50%',
-                        background: 'rgba(255, 255, 255, 0.5)',
-                    }} />
+            <div style={containerStyle}>
+                {/* Row 1 */}
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setJumping(true) }} onTouchEnd={(e) => { e.stopPropagation(); setJumping(false) }}>
+                    Jump
                 </div>
-            )}
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(0, 1) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                    Forward
+                    <span style={{ fontSize: '20px' }}>⬆️</span>
+                </div>
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); handleLookStart('up') }} onTouchEnd={(e) => { e.stopPropagation(); handleLookEnd() }}>
+                    Look Up
+                </div>
 
-            {/* D-Pad Container */}
-            <div style={{
-                position: 'absolute',
-                bottom: '40px',
-                left: '40px',
-                width: '150px',
-                height: '150px',
-                pointerEvents: 'none' // Let children handle events
-            }}>
-                {/* UP */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: '50px',
-                        width: '50px',
-                        height: '50px',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        borderRadius: '5px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        color: 'white',
-                        pointerEvents: 'auto'
-                    }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleDpad('up', true) }}
-                    onTouchEnd={(e) => { e.stopPropagation(); handleDpad('up', false) }}
-                >
-                    ▲
+                {/* Row 2 */}
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(-1, 0) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                    Left
+                    <span style={{ fontSize: '20px' }}>⬅️</span>
                 </div>
-                {/* DOWN */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: '50px',
-                        width: '50px',
-                        height: '50px',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        borderRadius: '5px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        color: 'white',
-                        pointerEvents: 'auto'
-                    }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleDpad('down', true) }}
-                    onTouchEnd={(e) => { e.stopPropagation(); handleDpad('down', false) }}
-                >
-                    ▼
+                <div style={{ ...btnStyle, background: 'rgba(255, 0, 0, 0.5)' }} onTouchStart={(e) => { e.stopPropagation(); setShooting(true) }} onTouchEnd={(e) => { e.stopPropagation(); setShooting(false) }}>
+                    Fire
+                    <span style={{ fontSize: '10px' }}>🔴</span>
                 </div>
-                {/* LEFT */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: '50px',
-                        left: 0,
-                        width: '50px',
-                        height: '50px',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        borderRadius: '5px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        color: 'white',
-                        pointerEvents: 'auto'
-                    }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleDpad('left', true) }}
-                    onTouchEnd={(e) => { e.stopPropagation(); handleDpad('left', false) }}
-                >
-                    ◀
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(1, 0) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                    Right
+                    <span style={{ fontSize: '20px' }}>➡️</span>
                 </div>
-                {/* RIGHT */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: '50px',
-                        right: 0,
-                        width: '50px',
-                        height: '50px',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        borderRadius: '5px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        color: 'white',
-                        pointerEvents: 'auto'
-                    }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleDpad('right', true) }}
-                    onTouchEnd={(e) => { e.stopPropagation(); handleDpad('right', false) }}
-                >
-                    ▶
-                </div>
-            </div>
 
-            {/* Jump Button */}
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: '40px',
-                    right: '40px',
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    background: 'rgba(0, 255, 255, 0.3)',
-                    border: '2px solid rgba(0, 255, 255, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '14px',
-                    pointerEvents: 'auto'
-                }}
-                onTouchStart={(e) => { e.stopPropagation(); setJumping(true) }}
-                onTouchEnd={(e) => { e.stopPropagation(); setJumping(false) }}
-            >
-                JUMP
-            </div>
-
-            {/* Shoot Button */}
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: '60px',
-                    right: '140px',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 50, 50, 0.3)',
-                    border: '2px solid rgba(255, 50, 50, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '12px',
-                    pointerEvents: 'auto'
-                }}
-                onTouchStart={(e) => { e.stopPropagation(); setShooting(true) }}
-                onTouchEnd={(e) => { e.stopPropagation(); setShooting(false) }}
-            >
-                FIRE
+                {/* Row 3 */}
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setRunning(true) }} onTouchEnd={(e) => { e.stopPropagation(); setRunning(false) }}>
+                    Run
+                </div>
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); setMovement(0, -1) }} onTouchEnd={(e) => { e.stopPropagation(); setMovement(0, 0) }}>
+                    Reverse
+                    <span style={{ fontSize: '20px' }}>⬇️</span>
+                </div>
+                <div style={btnStyle} onTouchStart={(e) => { e.stopPropagation(); handleLookStart('down') }} onTouchEnd={(e) => { e.stopPropagation(); handleLookEnd() }}>
+                    Look<br />Down
+                </div>
             </div>
         </div>
     )

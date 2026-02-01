@@ -79,12 +79,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         if ((state.enemies.length >= 20 && type === 'normal') || state.gameState !== 'playing') return state
 
         const isLeafs = type === 'leafs'
+        // Scale enemy HP with score to ensure game gets harder
+        const difficultyMultiplier = 1 + (state.score * 0.0005)
+        const baseHp = isLeafs ? 100 : 30
+        const scaledHp = Math.floor(baseHp * difficultyMultiplier)
+
         return {
             enemies: [
                 ...state.enemies,
                 {
                     id: Date.now(),
-                    hp: isLeafs ? 100 : 30, // Leafs health vs Standard
+                    hp: scaledHp,
                     type: type,
                     position: [
                         (Math.random() - 0.5) * 50,
@@ -226,20 +231,29 @@ export const useGameStore = create<GameState>((set, get) => ({
         let newState: Partial<GameState> & { weapon?: Weapon } = {}
         let msg = ''
 
+        // Difficulty Multiplier: Increases by 50% every 1000 points (example logic)
+        // Base: 1.0, 1000 score: 1.5, 2000 score: 2.0
+        const difficultyMultiplier = 1 + (state.score * 0.0005)
+
         if (item.type === 'health') {
-            newState = { health: Math.min(100, state.health + 25) }
-            msg = 'Picked up Health Pack!'
+            const healAmount = Math.floor(25 * difficultyMultiplier)
+            newState = { health: Math.min(100, state.health + healAmount) }
+            msg = `Picked up Health Pack (+${healAmount} HP)!`
         } else if (item.type === 'weapon') {
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#ffa500']
             const color = colors[Math.floor(Math.random() * colors.length)]
-            const damage = 10 + Math.floor(Math.random() * 21) // 10-30 damage
+
+            // Scaled Damage
+            const baseMin = 10
+            const baseMax = 30
+            const damage = Math.floor((baseMin + Math.random() * (baseMax - baseMin)) * difficultyMultiplier)
 
             const prefixes = ['Plasma', 'Void', 'Neutron', 'Cosmic', 'Hyper', 'Turbo']
             const suffixes = ['Ravager', 'Blaster', 'Cannon', 'Ray', 'Slicer', 'Melter']
             const name = `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`
 
             newState = { weapon: { name, damage, color } }
-            msg = `Found ${name}!`
+            msg = `Found ${name} (Dmg: ${damage})!`
         }
 
         return {

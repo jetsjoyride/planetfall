@@ -148,7 +148,11 @@ export const Player = () => {
 
         frontVector.set(0, 0, zDir)
         sideVector.set(xDir, 0, 0)
-        const currentSpeed = run ? RUN_SPEED : SPEED
+
+        // Check both keyboard run and mobile run
+        const isRunning = run || useMobileControlsStore.getState().isRunning
+        const currentSpeed = isRunning ? RUN_SPEED : SPEED
+
         direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(currentSpeed).applyEuler(state.camera.rotation)
 
         body.current.setLinvel({ x: direction.x, y: velocity.y, z: direction.z }, true)
