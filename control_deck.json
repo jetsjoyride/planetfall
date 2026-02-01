@@ -3,6 +3,6 @@
     "testing_suite": "OFF",
     "checkin_command": "git add . && git commit -m 'wip' && git push",
     "update_docs_command": "./utils/generate_docs.sh",
-    "deploy_command": "npx firebase deploy",
+    "deploy_command": "npm run build && npx firebase deploy",
     "start_server_command": "npx kill-port 5173 && npm run dev"
 }

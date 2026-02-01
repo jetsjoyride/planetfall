@@ -36,8 +36,8 @@ export const MainMenu = () => {
                         <h2 style={{ color: 'red' }}>GAME OVER</h2>
                         <p style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Final Score: {score}</p>
 
-                        {/* Check if Top 10 */}
-                        {(highScores.length < 10 || score > (highScores[highScores.length - 1]?.score || 0)) ? (
+                        {/* Check if Top 10 AND Score > 0 */}
+                        {((highScores.length < 10 || score > (highScores[highScores.length - 1]?.score || 0)) && score > 0) ? (
                             <div style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.5)', padding: '1.5rem', borderRadius: '10px', border: '1px solid #40ff40' }}>
                                 <p style={{ color: '#40ff40', fontSize: '1.2rem', marginBottom: '1rem' }}>NEW HIGH SCORE!</p>
                                 <input
