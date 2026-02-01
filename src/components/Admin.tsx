@@ -5,6 +5,7 @@ import { db } from '../firebase'
 export const Admin = () => {
     const [playerCount, setPlayerCount] = useState<number | null>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -17,8 +18,9 @@ export const Admin = () => {
                 } else {
                     setPlayerCount(0)
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Error fetching admin stats:", e)
+                setError(e.message || "Failed to fetch")
             } finally {
                 setLoading(false)
             }
@@ -43,13 +45,14 @@ export const Admin = () => {
             <h1>PLANETFALL ADMIN</h1>
             <div style={{ marginTop: '2rem', fontSize: '1.5rem', border: '1px solid #333', padding: '1rem', display: 'inline-block' }}>
                 <p>Global Unique Players</p>
-                <div style={{ fontSize: '3rem', fontWeight: 'bold', marginTop: '1rem' }}>
-                    {loading ? '...' : playerCount}
+                <div style={{ fontSize: '3rem', fontWeight: 'bold', marginTop: '1rem', color: error ? 'red' : '#0f0' }}>
+                    {loading ? '...' : (error ? 'ERR' : playerCount)}
                 </div>
+                {error && <div style={{ fontSize: '1rem', color: 'red', marginTop: '0.5rem' }}>{error}</div>}
             </div>
 
             <div style={{ marginTop: '2rem', color: '#666' }}>
-                <p>Status: {loading ? 'Loading...' : 'Connected'}</p>
+                <p>Status: {loading ? 'Loading...' : (error ? 'Offline / Error' : 'Connected')}</p>
             </div>
         </div>
     )
