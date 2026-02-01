@@ -29,10 +29,12 @@ export const MobileControls = () => {
 
     // Continuous button state handlers
     const lookInterval = useRef<number | null>(null)
+    const turnInterval = useRef<number | null>(null)
 
     useEffect(() => {
         return () => {
             if (lookInterval.current) clearInterval(lookInterval.current)
+            if (turnInterval.current) clearInterval(turnInterval.current)
         }
     }, [])
 
@@ -50,6 +52,20 @@ export const MobileControls = () => {
         if (lookInterval.current) {
             clearInterval(lookInterval.current)
             lookInterval.current = null
+        }
+    }
+
+    const handleTurnStart = (dir: 'left' | 'right') => {
+        if (turnInterval.current) clearInterval(turnInterval.current)
+        turnInterval.current = window.setInterval(() => {
+            addCameraDelta(dir === 'left' ? -15 : 15, 0) // Continuous yaw (increased speed for turning)
+        }, 16)
+    }
+
+    const handleTurnEnd = () => {
+        if (turnInterval.current) {
+            clearInterval(turnInterval.current)
+            turnInterval.current = null
         }
     }
 
@@ -164,11 +180,11 @@ export const MobileControls = () => {
 
                 {/* Row 2 */}
                 <div style={btnStyle}
-                    onTouchStart={(e) => { e.stopPropagation(); setMovement(1, 0) }}
-                    onTouchEnd={(e) => handleButtonEnd(e, () => setMovement(0, 0))}
-                    onTouchCancel={(e) => handleButtonEnd(e, () => setMovement(0, 0))}>
-                    Left
-                    <span style={{ fontSize: '20px' }}>⬅️</span>
+                    onTouchStart={(e) => { e.stopPropagation(); handleTurnStart('left') }}
+                    onTouchEnd={(e) => handleButtonEnd(e, handleTurnEnd)}
+                    onTouchCancel={(e) => handleButtonEnd(e, handleTurnEnd)}>
+                    Turn<br />Left
+                    <span style={{ fontSize: '20px' }}>↺</span>
                 </div>
                 <div style={{ ...btnStyle, background: 'rgba(255, 0, 0, 0.5)' }}
                     onTouchStart={(e) => { e.stopPropagation(); setShooting(true) }}
@@ -178,11 +194,11 @@ export const MobileControls = () => {
                     <span style={{ fontSize: '10px' }}>🔴</span>
                 </div>
                 <div style={btnStyle}
-                    onTouchStart={(e) => { e.stopPropagation(); setMovement(-1, 0) }}
-                    onTouchEnd={(e) => handleButtonEnd(e, () => setMovement(0, 0))}
-                    onTouchCancel={(e) => handleButtonEnd(e, () => setMovement(0, 0))}>
-                    Right
-                    <span style={{ fontSize: '20px' }}>➡️</span>
+                    onTouchStart={(e) => { e.stopPropagation(); handleTurnStart('right') }}
+                    onTouchEnd={(e) => handleButtonEnd(e, handleTurnEnd)}
+                    onTouchCancel={(e) => handleButtonEnd(e, handleTurnEnd)}>
+                    Turn<br />Right
+                    <span style={{ fontSize: '20px' }}>↻</span>
                 </div>
 
                 {/* Row 3 */}

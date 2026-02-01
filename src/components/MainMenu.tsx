@@ -14,28 +14,40 @@ export const MainMenu = () => {
             top: 0,
             left: 0,
             width: '100%',
-            height: '100%',
+            height: '100dvh', // Use dynamic viewport height for mobile
             background: 'rgba(0,0,0,0.85)',
             zIndex: 100,
             overflowY: 'auto',
+            overflowX: 'hidden', // Prevent horizontal scroll
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center',
+            justifyContent: 'center' // Center vertically
         }}>
             <div style={{
-                margin: 'auto', // Safe centering
+                margin: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '2rem',
-                minHeight: 'min-content'
+                padding: '1rem', // Reduced padding
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box'
             }}>
-                <h1 style={{ fontSize: '4rem', marginBottom: '0', fontFamily: 'monospace', color: 'white', textAlign: 'center', lineHeight: '1' }}>
+                <h1 style={{
+                    fontSize: 'clamp(2.5rem, 13vw, 4rem)', // Responsive font size
+                    marginBottom: '0',
+                    fontFamily: 'monospace',
+                    color: 'white',
+                    textAlign: 'center',
+                    lineHeight: '1',
+                    width: '100%'
+                }}>
                     PLANETFALL
                     <br />
-                    <span style={{ fontSize: '2rem', letterSpacing: '0.5em', color: '#40ff40' }}>ODYSSEY</span>
+                    <span style={{ fontSize: 'clamp(1.5rem, 8vw, 2rem)', letterSpacing: '0.5em', color: '#40ff40' }}>ODYSSEY</span>
                 </h1>
-                <p style={{ fontSize: '1.2rem', marginBottom: '2rem', marginTop: '1rem', fontFamily: 'monospace', color: '#40ff40', opacity: 0.8 }}>Designed by Daniel H</p>
+                <p style={{ fontSize: '1rem', marginBottom: '1.5rem', marginTop: '1rem', fontFamily: 'monospace', color: '#40ff40', opacity: 0.8 }}>Designed by Daniel H</p>
 
                 {gameState === 'gameover' && (
                     <div style={{ marginBottom: '2rem', textAlign: 'center', color: 'white' }}>
@@ -167,26 +179,14 @@ export const MainMenu = () => {
 
                         <h3 style={{ color: '#40ff40', marginTop: '1.5rem', marginBottom: '0.5rem' }}>CONTROLS</h3>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                            <div>
-                                <h4 style={{ borderBottom: '1px solid #777', paddingBottom: '0.2rem', marginBottom: '0.5rem' }}>DESKTOP</h4>
-                                <ul style={{ listStyle: 'none', padding: 0 }}>
-                                    <li><strong>WASD</strong> - Move</li>
-                                    <li><strong>Mouse</strong> - Look</li>
-                                    <li><strong>Click</strong> - Shoot</li>
-                                    <li><strong>Space</strong> - Jump</li>
-                                    <li><strong>Shift</strong> - Run</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h4 style={{ borderBottom: '1px solid #777', paddingBottom: '0.2rem', marginBottom: '0.5rem' }}>MOBILE</h4>
-                                <ul style={{ listStyle: 'none', padding: 0 }}>
-                                    <li><strong>Left Stick/Buttons</strong> - Move</li>
-                                    <li><strong>Touch Screen</strong> - Look</li>
-                                    <li><strong>Double Tap</strong> - Fire</li>
-                                    <li><strong>Run Button</strong> - Sprint Forward</li>
-                                </ul>
-                            </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <ul style={{ listStyle: 'none', padding: 0, display: 'inline-block', textAlign: 'left' }}>
+                                <li><strong>WASD</strong> - Move</li>
+                                <li><strong>Mouse</strong> - Look</li>
+                                <li><strong>Click</strong> - Shoot</li>
+                                <li><strong>Space</strong> - Jump</li>
+                                <li><strong>Shift</strong> - Run</li>
+                            </ul>
                         </div>
 
                         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
