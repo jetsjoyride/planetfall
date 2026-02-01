@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { Stats, KeyboardControls, Sky } from '@react-three/drei'
+import { KeyboardControls, Sky } from '@react-three/drei'
 import { Player } from './Player'
 import { World } from './World'
 import { EnemyManager } from './EnemyManager'
@@ -23,7 +23,6 @@ export const Game = () => {
     return (
         <Canvas shadows camera={{ position: [0, 5, 10], fov: 75 }} gl={{ antialias: false }}>
             <KeyboardControls map={keyboardMap}>
-                <Stats />
                 <Sky sunPosition={[100, 20, 100]} turbidity={0.5} rayleigh={0.5} />
                 <ambientLight intensity={0.5} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow shadow-bias={-0.0001} />
